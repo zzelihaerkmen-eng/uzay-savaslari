@@ -1,4 +1,4 @@
-[12.07.2026 22:02] ~Zzz~: <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -126,7 +126,7 @@
 
         .btn {
             background: linear-gradient(135deg, #0284c7, #0369a1);
-[12.07.2026 22:02] ~Zzz~: color: white;
+ color: white;
             border: none;
             padding: 14px 35px;
             font-size: 16px;
@@ -217,7 +217,7 @@
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(800, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
-[12.07.2026 22:02] ~Zzz~: gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+ gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.15);
                 } else if (type === 'hit') {
@@ -292,7 +292,7 @@
                 lasers.push({ x: player.x + player.w - 8 - thickness, y: player.y, w: thickness, h: 14, speed: 11, dx: 0 });
             }
         }
-[12.07.2026 22:02] ~Zzz~: function createExplosion(x, y, color, count = 12) {
+        function createExplosion(x, y, color, count = 12) {
             playSound('hit');
             for (let i = 0; i < count; i++) {
                 particles.push({
@@ -393,7 +393,7 @@
             } else {
                 buffDisplay.innerText = player.hasShield ? "[KALKAN AKTİF]" : "";
             }
-[12.07.2026 22:02] ~Zzz~: // Boss Tetikleme Kontrolü
+            // Boss Tetikleme Kontrolü
             if (score >= 300 && !boss.active) {
                 boss.active = true;
                 boss.health = boss.maxHealth;
@@ -491,7 +491,7 @@
                         // Boss Can Barını Güncelle
                         const healthPct = (boss.health / boss.maxHealth) * 100;
                         bossHealthBar.style.width = Math.max(0, healthPct) + "%";
-[12.07.2026 22:02] ~Zzz~: if (boss.health <= 0) {
+            if (boss.health <= 0) {
                             // BOSS ÖLDÜ!
                             createExplosion(boss.x + boss.w/2, boss.y + boss.h/2, "#f43f5e", 50);
                             createExplosion(boss.x + 30, boss.y + 20, "#38bdf8", 30);
@@ -574,7 +574,7 @@
                 ctx.closePath();
                 ctx.fill();
             }
-[12.07.2026 22:02] ~Zzz~: // Gemi Gövdesi Çizimi
+            // Gemi Gövdesi Çizimi
             ctx.fillStyle = "#1e1b4b"; // Koyu metalik şasi
             ctx.strokeStyle = player.hasShield ? "#38bdf8" : "#c084fc";
             ctx.lineWidth = 2;
@@ -671,7 +671,7 @@
             ctx.shadowColor = "#3b82f6";
             lasers.forEach(l => ctx.fillRect(l.x, l.y, l.w, l.h));
             ctx.restore();
-[12.07.2026 22:02] ~Zzz~: // Boss Lazeri (Plazma Topları)
+            // Boss Lazeri (Plazma Topları)
             ctx.save();
             ctx.fillStyle = "#ec4899";
             ctx.shadowBlur = 10;
