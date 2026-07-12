@@ -126,7 +126,7 @@
 
         .btn {
             background: linear-gradient(135deg, #0284c7, #0369a1);
- color: white;
+            color: white;
             border: none;
             padding: 14px 35px;
             font-size: 16px;
@@ -217,7 +217,7 @@
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(800, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
- gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.15);
                 } else if (type === 'hit') {
@@ -292,6 +292,7 @@
                 lasers.push({ x: player.x + player.w - 8 - thickness, y: player.y, w: thickness, h: 14, speed: 11, dx: 0 });
             }
         }
+
         function createExplosion(x, y, color, count = 12) {
             playSound('hit');
             for (let i = 0; i < count; i++) {
@@ -326,7 +327,7 @@
             screen.style.display = "flex";
 
             const upgrades = [
-                { text: 🔥 Lazer Gücü (Mevcut Seviye: ${laserDamageLevel}), action: () => { laserDamageLevel++; } },
+                { text: `🔥 Lazer Gücü (Mevcut Seviye: ${laserDamageLevel})`, action: () => { laserDamageLevel++; } },
                 { text: "🛡️ Kalkan Üret / Yenile", action: () => { player.hasShield = true; } },
                 { text: "⚡ Üçlü Plazma Atışı (12 Saniye)", action: () => { player.tripleTimer = 720; } }
             ];
@@ -389,10 +390,11 @@
             // Buff Yazısı Güncelleme
             if (player.tripleTimer > 0) {
                 player.tripleTimer--;
-                buffDisplay.innerText = [ÜÇLÜ ATEŞ: ${Math.ceil(player.tripleTimer/60)}s];
+                buffDisplay.innerText = `[ÜÇLÜ ATEŞ: ${Math.ceil(player.tripleTimer/60)}s]`;
             } else {
                 buffDisplay.innerText = player.hasShield ? "[KALKAN AKTİF]" : "";
             }
+
             // Boss Tetikleme Kontrolü
             if (score >= 300 && !boss.active) {
                 boss.active = true;
@@ -491,7 +493,8 @@
                         // Boss Can Barını Güncelle
                         const healthPct = (boss.health / boss.maxHealth) * 100;
                         bossHealthBar.style.width = Math.max(0, healthPct) + "%";
-            if (boss.health <= 0) {
+
+                        if (boss.health <= 0) {
                             // BOSS ÖLDÜ!
                             createExplosion(boss.x + boss.w/2, boss.y + boss.h/2, "#f43f5e", 50);
                             createExplosion(boss.x + 30, boss.y + 20, "#38bdf8", 30);
@@ -505,7 +508,7 @@
                             screen.style.display = "flex";
                             screenTitle.innerText = "🏆 ZAFER KAZANILDI! 🏆";
                             screenText.style.display = "block";
-                            screenText.innerHTML = Büyük Amiral Gemisini Yok Ettiniz!<br>Nihai Skorunuz: <b>${score}</b>;
+                            screenText.innerHTML = `Büyük Amiral Gemisini Yok Ettiniz!<br>Nihai Skorunuz: <b>${score}</b>`;
                             actionBtn.style.display = "block";
                             actionBtn.innerText = "YENİDEN SAVAŞ";
                             upgradeOptions.style.display = "none";
@@ -540,7 +543,7 @@
                 screen.style.display = "flex";
                 screenTitle.innerText = "Oyun Bitti";
                 screenText.style.display = "block";
-                screenText.innerHTML = Derin uzayda geminiz imha edildi.<br>Skor: <b>${score}</b> | Seviye: <b>${level}</b>;
+                screenText.innerHTML = `Derin uzayda geminiz imha edildi.<br>Skor: <b>${score}</b> | Seviye: <b>${level}</b>`;
                 actionBtn.style.display = "block";
                 actionBtn.innerText = "YENİDEN DENE";
                 upgradeOptions.style.display = "none";
@@ -574,6 +577,7 @@
                 ctx.closePath();
                 ctx.fill();
             }
+
             // Gemi Gövdesi Çizimi
             ctx.fillStyle = "#1e1b4b"; // Koyu metalik şasi
             ctx.strokeStyle = player.hasShield ? "#38bdf8" : "#c084fc";
@@ -671,6 +675,7 @@
             ctx.shadowColor = "#3b82f6";
             lasers.forEach(l => ctx.fillRect(l.x, l.y, l.w, l.h));
             ctx.restore();
+
             // Boss Lazeri (Plazma Topları)
             ctx.save();
             ctx.fillStyle = "#ec4899";
