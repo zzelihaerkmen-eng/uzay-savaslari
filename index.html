@@ -1,0 +1,695 @@
+[12.07.2026 22:02] ~Zzz~: <!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uzay Savaşları: RPG Evrim Sürümü (Nihai Kusursuz Sürüm)</title>
+    <style>
+        body {
+            margin: 0;
+            background: #020617;
+            color: #fff;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .game-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 500px;
+            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            background: rgba(30, 41, 59, 0.7);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            border: 1px solid #334155;
+        }
+
+        .bar-container {
+            width: 500px;
+            height: 8px;
+            background: #1e293b;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+        #xpBar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #a855f7, #3b82f6);
+            transition: width 0.2s;
+        }
+
+        #score { color: #38bdf8; }
+        #lives { color: #f43f5e; }
+        #levelDisplay { color: #a855f7; background: rgba(168, 85, 247, 0.1); padding: 2px 8px; border-radius: 4px; }
+        #buffDisplay { color: #22c55e; font-size: 13px; margin-left: 10px; font-weight: normal; }
+
+        .canvas-container {
+            position: relative;
+        }
+
+        canvas {
+            border: 3px solid #475569;
+            background: #020617;
+            border-radius: 10px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        #bossHealthContainer {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 50px;
+            width: 400px;
+            height: 14px;
+            background: #1e293b;
+            border-radius: 7px;
+            border: 2px solid #fff;
+            overflow: hidden;
+            z-index: 5;
+        }
+        #bossHealthBar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #ec4899);
+        }
+
+        .screen {
+            position: absolute;
+            width: 500px;
+            height: 600px;
+            background: rgba(11, 17, 32, 0.96);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .screen h1 { font-size: 34px; margin: 0 0 15px 0; color: #38bdf8; text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+        .screen p { color: #94a3b8; margin-bottom: 30px; padding: 0 40px; line-height: 1.7; }
+        
+        .upgrade-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 80%;
+            margin-top: 20px;
+        }
+        .upgrade-card {
+            background: #1e293b;
+            border: 2px solid #334155;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        .upgrade-card:hover {
+            background: #2d3748;
+            border-color: #a855f7;
+            transform: scale(1.03);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+[12.07.2026 22:02] ~Zzz~: color: white;
+            border: none;
+            padding: 14px 35px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+        }
+        .btn:hover { background: #0369a1; }
+    </style>
+</head>
+<body>
+
+    <div class="game-panel">
+        <div>Skor: <span id="score">0</span> <span id="buffDisplay"></span></div>
+        <div id="levelDisplay">LVL: 1</div>
+        <div>Can: <span id="lives">❤❤❤</span></div>
+    </div>
+    <div class="bar-container"><div id="xpBar"></div></div>
+
+    <div class="canvas-container">
+        <div id="bossHealthContainer"><div id="bossHealthBar"></div></div>
+
+        <div id="gameScreen" class="screen">
+            <h1 id="screenTitle">GEMINI EVRİM SAVAŞI</h1>
+            <p id="screenText">Düşmanları vur, XP kristalleri topla, seviye atla ve gemini geliştir!<br><br><b>Kontroller:</b> Fare ile hareket veya Yön Tuşları | Ateş: Tıklama veya Boşluk (Space)<br><br><span style="color:#e11d48">⚠️ Dikkat: Skor 300 olunca Büyük Amiral Gemisi (Boss) gelir!</span></p>
+            <div id="upgradeOptions" class="upgrade-container" style="display: none;"></div>
+            <button id="actionBtn" class="btn">SAVAŞI BAŞLAT</button>
+        </div>
+        
+        <canvas id="spaceCanvas" width="500" height="600"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("spaceCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreEl = document.getElementById("score");
+        const livesEl = document.getElementById("lives");
+        const xpBar = document.getElementById("xpBar");
+        const levelDisplay = document.getElementById("levelDisplay");
+        const buffDisplay = document.getElementById("buffDisplay");
+        const screen = document.getElementById("gameScreen");
+        const screenTitle = document.getElementById("screenTitle");
+        const screenText = document.getElementById("screenText");
+        const actionBtn = document.getElementById("actionBtn");
+        const upgradeOptions = document.getElementById("upgradeOptions");
+        const bossHealthContainer = document.getElementById("bossHealthContainer");
+        const bossHealthBar = document.getElementById("bossHealthBar");
+
+        let gameActive = false;
+        let isUpgradePhase = false;
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let xp = 0;
+        let nextLevelXp = 100;
+        let animationId;
+        
+        let laserDamageLevel = 1; 
+        let engineSpeed = 7.5;
+
+        let stars = [];
+        let player = { x: 230, y: 500, w: 44, h: 44, tripleTimer: 0, hasShield: false, movingLeft: false, movingRight: false };
+        let boss = { active: false, x: 170, y: -100, w: 160, h: 70, speed: 2, direction: 1, maxHealth: 100, health: 100, shootTimer: 0 };
+
+        let lasers = [];
+        let enemyLasers = [];
+        let enemies = [];
+        let particles = [];
+        let spawnTimer = 0;
+        let spawnInterval = 40;
+
+        // --- SES SENTEZLEYİCİSİ (Web Audio API) ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'laser') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+[12.07.2026 22:02] ~Zzz~: gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'hit') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'boss_laser') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+                } else if (type === 'upgrade') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.08);
+                    osc.frequency.setValueAtTime(900, audioCtx.currentTime + 0.16);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch(e) {}
+        }
+
+        // Kontroller
+        document.addEventListener("keydown", (e) => {
+            if (e.code === "ArrowLeft") player.movingLeft = true;
+            if (e.code === "ArrowRight") player.movingRight = true;
+            if (e.code === "Space" && gameActive && !isUpgradePhase) {
+                e.preventDefault();
+                fireLaser();
+            }
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.code === "ArrowLeft") player.movingLeft = false;
+            if (e.code === "ArrowRight") player.movingRight = false;
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (!gameActive || isUpgradePhase) return;
+            const rect = canvas.getBoundingClientRect();
+            player.movingLeft = false;
+            player.movingRight = false;
+            player.x = (e.clientX - rect.left) - player.w / 2;
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.w) player.x = canvas.width - player.w;
+        });
+
+        canvas.addEventListener("click", () => {
+            if (gameActive && !isUpgradePhase) fireLaser();
+        });
+
+        actionBtn.addEventListener("click", () => {
+            initAudio();
+            startGame();
+        });
+
+        function fireLaser() {
+            playSound('laser');
+            let thickness = 3 + laserDamageLevel; 
+            if (player.tripleTimer > 0) {
+                lasers.push({ x: player.x + player.w/2 - thickness/2, y: player.y, w: thickness, h: 16, speed: 12, dx: 0 });
+                lasers.push({ x: player.x, y: player.y + 10, w: thickness, h: 16, speed: 12, dx: -2.5 });
+                lasers.push({ x: player.x + player.w - thickness, y: player.y + 10, w: thickness, h: 16, speed: 12, dx: 2.5 });
+            } else {
+                lasers.push({ x: player.x + 8, y: player.y, w: thickness, h: 14, speed: 11, dx: 0 });
+                lasers.push({ x: player.x + player.w - 8 - thickness, y: player.y, w: thickness, h: 14, speed: 11, dx: 0 });
+            }
+        }
+[12.07.2026 22:02] ~Zzz~: function createExplosion(x, y, color, count = 12) {
+            playSound('hit');
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 7, vy: (Math.random() - 0.5) * 7,
+                    radius: Math.random() * 3 + 1, alpha: 1, color: color
+                });
+            }
+        }
+
+        function gainXp(amount) {
+            xp += amount;
+            if (xp >= nextLevelXp) {
+                xp -= nextLevelXp;
+                level++;
+                nextLevelXp = Math.floor(nextLevelXp * 1.5);
+                levelDisplay.innerText = "LVL: " + level;
+                triggerUpgradeMenu();
+            }
+            xpBar.style.width = (xp / nextLevelXp) * 100 + "%";
+        }
+
+        function triggerUpgradeMenu() {
+            playSound('upgrade');
+            isUpgradePhase = true;
+            upgradeOptions.innerHTML = "";
+            upgradeOptions.style.display = "flex";
+            screenText.style.display = "none";
+            actionBtn.style.display = "none";
+            screenTitle.innerText = "✨ SEVİYE ATLADINIZ! ✨";
+            screen.style.display = "flex";
+
+            const upgrades = [
+                { text: 🔥 Lazer Gücü (Mevcut Seviye: ${laserDamageLevel}), action: () => { laserDamageLevel++; } },
+                { text: "🛡️ Kalkan Üret / Yenile", action: () => { player.hasShield = true; } },
+                { text: "⚡ Üçlü Plazma Atışı (12 Saniye)", action: () => { player.tripleTimer = 720; } }
+            ];
+
+            upgrades.forEach(upg => {
+                const card = document.createElement("div");
+                card.className = "upgrade-card";
+                card.innerText = upg.text;
+                card.onclick = () => {
+                    upg.action();
+                    isUpgradePhase = false;
+                    screen.style.display = "none";
+                };
+                upgradeOptions.appendChild(card);
+            });
+        }
+
+        function startGame() {
+            score = 0; lives = 3; level = 1; xp = 0; nextLevelXp = 100;
+            laserDamageLevel = 1; player.hasShield = false; player.tripleTimer = 0;
+            lasers = []; enemies = []; enemyLasers = []; particles = [];
+            boss.active = false; boss.y = -100; boss.health = boss.maxHealth;
+            bossHealthContainer.style.display = "none";
+            
+            scoreEl.innerText = score;
+            levelDisplay.innerText = "LVL: " + level;
+            buffDisplay.innerText = "";
+            xpBar.style.width = "0%";
+            updateLivesDisplay();
+            
+            gameActive = true;
+            isUpgradePhase = false;
+            screen.style.display = "none";
+            
+            stars = [];
+            for(let i=0; i<60; i++) {
+                stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, speed: Math.random()*2 + 0.5});
+            }
+            
+            if(!animationId) gameLoop();
+        }
+
+        function updateLivesDisplay() {
+            livesEl.innerText = "❤".repeat(Math.max(0, lives));
+        }
+
+        function gameLoop() {
+            if (gameActive && !isUpgradePhase) {
+                updateGame();
+                drawGame();
+            }
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function updateGame() {
+            // Klavye Yönetimi
+            if (player.movingLeft && player.x > 0) player.x -= engineSpeed;
+            if (player.movingRight && player.x < canvas.width - player.w) player.x += engineSpeed;
+
+            // Buff Yazısı Güncelleme
+            if (player.tripleTimer > 0) {
+                player.tripleTimer--;
+                buffDisplay.innerText = [ÜÇLÜ ATEŞ: ${Math.ceil(player.tripleTimer/60)}s];
+            } else {
+                buffDisplay.innerText = player.hasShield ? "[KALKAN AKTİF]" : "";
+            }
+[12.07.2026 22:02] ~Zzz~: // Boss Tetikleme Kontrolü
+            if (score >= 300 && !boss.active) {
+                boss.active = true;
+                boss.health = boss.maxHealth;
+                bossHealthContainer.style.display = "block";
+                enemies = []; // Ekrandaki küçük düşmanları temizle
+            }
+
+            // Düşman Üretimi (Sadece Boss aktif değilken)
+            if (!boss.active) {
+                spawnTimer++;
+                if (spawnTimer >= spawnInterval) {
+                    spawnTimer = 0;
+                    enemies.push({ 
+                        x: Math.random() * (canvas.width - 32), 
+                        y: -30, 
+                        w: 32, 
+                        h: 32, 
+                        speed: 2 + level * 0.3 
+                    });
+                }
+            } else {
+                // --- BOSS MEKANİKLERİ ---
+                // Sahneye giriş animasyonu
+                if (boss.y < 50) {
+                    boss.y += 2;
+                } else {
+                    // Sağa sola gezinme hareketi
+                    boss.x += boss.speed * boss.direction;
+                    if (boss.x <= 10 || boss.x >= canvas.width - boss.w - 10) {
+                        boss.direction *= -1;
+                    }
+                    
+                    // Boss Ateş Etme Döngüsü
+                    boss.shootTimer++;
+                    if (boss.shootTimer >= Math.max(25, 50 - level * 2)) {
+                        boss.shootTimer = 0;
+                        playSound('boss_laser');
+                        // Üç namludan ateş açıyor
+                        enemyLasers.push({ x: boss.x + 20, y: boss.y + boss.h, w: 5, h: 15, speed: 5 });
+                        enemyLasers.push({ x: boss.x + boss.w / 2, y: boss.y + boss.h, w: 6, h: 18, speed: 6 });
+                        enemyLasers.push({ x: boss.x + boss.w - 20, y: boss.y + boss.h, w: 5, h: 15, speed: 5 });
+                    }
+                }
+            }
+
+            // Oyuncunun Lazer Hareketi
+            lasers.forEach((l, index) => {
+                l.y -= l.speed;
+                l.x += l.dx;
+                if (l.y < -20) lasers.splice(index, 1);
+            });
+
+            // Boss'un Lazer Hareketi ve Oyuncuya Çarpması
+            enemyLasers.forEach((el, index) => {
+                el.y += el.speed;
+                if (el.y > canvas.height) {
+                    enemyLasers.splice(index, 1);
+                } else if (checkCollision(el, player)) {
+                    enemyLasers.splice(index, 1);
+                    hitPlayer();
+                }
+            });
+
+            // Normal Düşmanların Hareketi ve Çarpışmalar
+            enemies.forEach((e, eIdx) => {
+                e.y += e.speed;
+                if (e.y > canvas.height) enemies.splice(eIdx, 1);
+
+                if (checkCollision(player, e)) {
+                    enemies.splice(eIdx, 1);
+                    hitPlayer();
+                }
+
+                lasers.forEach((l, lIdx) => {
+                    if (checkCollision(l, e)) {
+                        createExplosion(e.x + e.w/2, e.y + e.h/2, "#ef4444");
+                        gainXp(35);
+                        score += 15;
+                        scoreEl.innerText = score;
+                        enemies.splice(eIdx, 1);
+                        lasers.splice(lIdx, 1);
+                    }
+                });
+            });
+
+            // Oyuncu Lazerinin Boss'a Vurma Kontrolü
+            if (boss.active && boss.y >= 50) {
+                lasers.forEach((l, lIdx) => {
+                    if (checkCollision(l, boss)) {
+                        lasers.splice(lIdx, 1);
+                        boss.health -= laserDamageLevel;
+                        // Hasar efekti parçacıkları
+                        createExplosion(l.x, boss.y + boss.h, "#f43f5e", 4);
+                        
+                        // Boss Can Barını Güncelle
+                        const healthPct = (boss.health / boss.maxHealth) * 100;
+                        bossHealthBar.style.width = Math.max(0, healthPct) + "%";
+[12.07.2026 22:02] ~Zzz~: if (boss.health <= 0) {
+                            // BOSS ÖLDÜ!
+                            createExplosion(boss.x + boss.w/2, boss.y + boss.h/2, "#f43f5e", 50);
+                            createExplosion(boss.x + 30, boss.y + 20, "#38bdf8", 30);
+                            score += 500;
+                            scoreEl.innerText = score;
+                            boss.active = false;
+                            bossHealthContainer.style.display = "none";
+                            
+                            // Zafer Ekranı
+                            gameActive = false;
+                            screen.style.display = "flex";
+                            screenTitle.innerText = "🏆 ZAFER KAZANILDI! 🏆";
+                            screenText.style.display = "block";
+                            screenText.innerHTML = Büyük Amiral Gemisini Yok Ettiniz!<br>Nihai Skorunuz: <b>${score}</b>;
+                            actionBtn.style.display = "block";
+                            actionBtn.innerText = "YENİDEN SAVAŞ";
+                            upgradeOptions.style.display = "none";
+                        }
+                    }
+                });
+            }
+
+            // Parçacık (Patlama) Animasyon Döngüsü
+            particles.forEach((p, idx) => {
+                p.x += p.vx; p.y += p.vy; p.alpha -= 0.025;
+                if (p.alpha <= 0) particles.splice(idx, 1);
+            });
+        }
+
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x &&
+                   rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y;
+        }
+
+        function hitPlayer() {
+            if (player.hasShield) {
+                player.hasShield = false;
+                createExplosion(player.x + player.w/2, player.y + player.h/2, "#38bdf8", 15);
+                return;
+            }
+            createExplosion(player.x + player.w/2, player.y + player.h/2, "#f43f5e", 20);
+            lives--;
+            updateLivesDisplay();
+            if (lives <= 0) {
+                gameActive = false;
+                screen.style.display = "flex";
+                screenTitle.innerText = "Oyun Bitti";
+                screenText.style.display = "block";
+                screenText.innerHTML = Derin uzayda geminiz imha edildi.<br>Skor: <b>${score}</b> | Seviye: <b>${level}</b>;
+                actionBtn.style.display = "block";
+                actionBtn.innerText = "YENİDEN DENE";
+                upgradeOptions.style.display = "none";
+                bossHealthContainer.style.display = "none";
+            }
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Arka Plan Yıldızları (Derinlik Hissi)
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            stars.forEach(s => {
+                s.y += s.speed;
+                if(s.y > canvas.height) s.y = 0;
+                ctx.fillRect(s.x, s.y, s.speed > 1.5 ? 2 : 1, s.speed > 1.5 ? 2 : 1);
+            });
+
+            // --- 1. OYUNCU GEMİSİ GRAFİĞİ (Neon Kanatlı Savaş Gemisi) ---
+            ctx.save();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = player.hasShield ? "#38bdf8" : "#a855f7";
+            
+            // Motor Ateşi
+            if (gameActive && Math.random() > 0.3) {
+                ctx.fillStyle = Math.random() > 0.5 ? "#f97316" : "#ef4444";
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.w/2 - 6, player.y + player.h);
+                ctx.lineTo(player.x + player.w/2 + 6, player.y + player.h);
+                ctx.lineTo(player.x + player.w/2, player.y + player.h + 15 + Math.random()*8);
+                ctx.closePath();
+                ctx.fill();
+            }
+[12.07.2026 22:02] ~Zzz~: // Gemi Gövdesi Çizimi
+            ctx.fillStyle = "#1e1b4b"; // Koyu metalik şasi
+            ctx.strokeStyle = player.hasShield ? "#38bdf8" : "#c084fc";
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.w/2, player.y); // Burun
+            ctx.lineTo(player.x + player.w, player.y + player.h - 10); // Sağ Kanat ucu
+            ctx.lineTo(player.x + player.w - 12, player.y + player.h); // Sağ arka
+            ctx.lineTo(player.x + 12, player.y + player.h); // Sol arka
+            ctx.lineTo(player.x, player.y + player.h - 10); // Sol Kanat ucu
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Kokpit Camı
+            ctx.fillStyle = "#38bdf8";
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.w/2, player.y + 6);
+            ctx.lineTo(player.x + player.w/2 + 5, player.y + 18);
+            ctx.lineTo(player.x + player.w/2 - 5, player.y + 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            // Gemi Kalkan Efekti
+            if(player.hasShield) {
+                ctx.save();
+                ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = "#38bdf8";
+                ctx.beginPath();
+                ctx.arc(player.x + player.w/2, player.y + player.h/2, player.w * 0.7, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // --- 2. NORMAL DÜŞMAN GRAFİĞİ (Uzaylı Keşif Gemisi) ---
+            enemies.forEach(e => {
+                ctx.save();
+                ctx.fillStyle = "#1e0105";
+                ctx.strokeStyle = "#f43f5e";
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = "#f43f5e";
+                
+                ctx.beginPath();
+                ctx.moveTo(e.x + e.w/2, e.y + e.h); // Ön sivri uç
+                ctx.lineTo(e.x + e.w, e.y); // Sağ arka
+                ctx.lineTo(e.x + e.w - 8, e.y + 6);
+                ctx.lineTo(e.x + 8, e.y + 6);
+                ctx.lineTo(e.x, e.y); // Sol arka
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Parıldayan göz/çekirdek
+                ctx.fillStyle = "#ff0000";
+                ctx.fillRect(e.x + e.w/2 - 3, e.y + e.h/2 - 2, 6, 4);
+                ctx.restore();
+            });
+
+            // --- 3. BOSS GRAFİĞİ (Büyük Amiral Gemisi) ---
+            if (boss.active) {
+                ctx.save();
+                ctx.fillStyle = "#0f172a";
+                ctx.strokeStyle = "#ec4899";
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "#ef4444";
+
+                ctx.beginPath();
+                ctx.moveTo(boss.x, boss.y); // Sol arka
+                ctx.lineTo(boss.x + boss.w, boss.y); // Sağ arka
+                ctx.lineTo(boss.x + boss.w - 20, boss.y + boss.h - 20); // Sağ kanat kıvrımı
+                ctx.lineTo(boss.x + boss.w/2 + 30, boss.y + boss.h); // Ana ön sağ silah kulesi
+                ctx.lineTo(boss.x + boss.w/2 - 30, boss.y + boss.h); // Ana ön sol silah kulesi
+                ctx.lineTo(boss.x + 20, boss.y + boss.h - 20); // Sol kanat kıvrımı
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Boss Enerji Odası (Zayıf Nokta Görseli)
+                ctx.fillStyle = Math.random() > 0.4 ? "#f43f5e" : "#3b82f6";
+                ctx.fillRect(boss.x + boss.w/2 - 20, boss.y + 15, 40, 15);
+                ctx.restore();
+            }
+
+            // --- 4. LAZER GRAFİKLERİ ---
+            // Oyuncu Lazeri (Mavi Neon Işın)
+            ctx.save();
+            ctx.fillStyle = "#38bdf8";
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = "#3b82f6";
+            lasers.forEach(l => ctx.fillRect(l.x, l.y, l.w, l.h));
+            ctx.restore();
+[12.07.2026 22:02] ~Zzz~: // Boss Lazeri (Plazma Topları)
+            ctx.save();
+            ctx.fillStyle = "#ec4899";
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "#ef4444";
+            enemyLasers.forEach(el => {
+                ctx.beginPath();
+                ctx.arc(el.x + el.w/2, el.y + el.h/2, el.w, 0, Math.PI*2);
+                ctx.fill();
+            });
+            ctx.restore();
+
+            // Parçacıklar (Patlama Efektleri)
+            particles.forEach(p => {
+                ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            });
+        }
+    </script>
+</body>
+</html>
